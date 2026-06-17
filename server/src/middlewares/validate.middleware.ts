@@ -1,27 +1,23 @@
 import { Request, Response, NextFunction } from 'express';
 import { ZodSchema, ZodError } from 'zod';
-import { AppError } from './error.middleware';
+import { ValidationError } from './error.middleware';
 
 /**
- * Express middleware to validate request payload against a Zod schema
+ * Express middleware to validate request body against a Zod schema
  */
-export const validateRequest = (schema: ZodSchema) => {
+export const validateBody = (schema: ZodSchema) => {
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      await schema.parseAsync({
-        body: req.body,
-        query: req.query,
-        params: req.params,
-      });
+      req.body = await schema.parseAsync(req.body);
       next();
     } catch (error) {
       if (error instanceof ZodError) {
-        // Map over issues to output human-readable paths
+        // Collect Zod error issues
         const details = error.issues.map((issue) => ({
-          field: issue.path.slice(1).join('.'), // Removes parent context ('body' or 'query')
+          field: issue.path.join('.'),
           message: issue.message,
         }));
-        next(new AppError('Request input validation failed', 400, 'VALIDATION_ERROR', details));
+        next(new ValidationError('Request body validation failed', details));
       } else {
         next(error);
       }
@@ -29,4 +25,25 @@ export const validateRequest = (schema: ZodSchema) => {
   };
 };
 
-export default validateRequest;
+/**
+ * Express middleware to validate request query parameters against a Zod schema
+ */
+export const validateQuery = (schema: ZodSchema) => {
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      req.query = (await schema.parseAsync(req.query)) as any;
+      next();
+    } catch (error) {
+      if (error instanceof ZodError) {
+        // Collect Zod error issues
+        const details = error.issues.map((issue) => ({
+          field: issue.path.join('.'),
+          message: issue.message,
+        }));
+        next(new ValidationError('Request query parameters validation failed', details));
+      } else {
+        next(error);
+      }
+    }
+  };
+};

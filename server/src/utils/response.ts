@@ -42,7 +42,8 @@ export const sendError = (
   message: string,
   statusCode = 500,
   code = 'INTERNAL_SERVER_ERROR',
-  details?: any
+  details?: any,
+  stack?: string
 ): Response => {
   const payload: ErrorResponsePayload = {
     success: false,
@@ -53,6 +54,9 @@ export const sendError = (
   };
   if (details !== undefined) {
     payload.error.details = details;
+  }
+  if (stack !== undefined && process.env.NODE_ENV !== 'production') {
+    (payload.error as any).stack = stack;
   }
   return res.status(statusCode).json(payload);
 };

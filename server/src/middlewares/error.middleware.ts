@@ -20,6 +20,33 @@ export class AppError extends Error {
 }
 
 /**
+ * Custom operational errors
+ */
+export class AuthError extends AppError {
+  constructor(message = 'Authentication failed. Please verify credentials.', details?: any) {
+    super(message, 401, 'UNAUTHORIZED', details);
+  }
+}
+
+export class ForbiddenError extends AppError {
+  constructor(message = 'Forbidden: Access is denied.', details?: any) {
+    super(message, 403, 'FORBIDDEN', details);
+  }
+}
+
+export class NotFoundError extends AppError {
+  constructor(message = 'The requested resource was not found.', details?: any) {
+    super(message, 404, 'NOT_FOUND', details);
+  }
+}
+
+export class ValidationError extends AppError {
+  constructor(message = 'Validation failed for request parameters.', details?: any) {
+    super(message, 400, 'VALIDATION_ERROR', details);
+  }
+}
+
+/**
  * Global Express error handling middleware
  */
 export const errorHandlerMiddleware = (
@@ -34,14 +61,15 @@ export const errorHandlerMiddleware = (
   const message = err.message || 'An unexpected error occurred';
   const details = err instanceof AppError ? err.details : undefined;
 
-  // Logger will automatically capture the request ID using AsyncLocalStorage
+  // Log error stack trace to server logs (always logged internally)
   logger.error(`Error processing request: ${req.method} ${req.originalUrl} - ${message}`, {
     stack: err.stack,
     code,
     details,
   });
 
-  sendError(res, message, statusCode, code, details);
+  // Send standard JSON error response, conditionally exposing the stack trace based on NODE_ENV
+  sendError(res, message, statusCode, code, details, err.stack);
 };
 
 export default errorHandlerMiddleware;
