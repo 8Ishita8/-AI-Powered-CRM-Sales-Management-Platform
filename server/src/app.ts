@@ -5,8 +5,9 @@ import { errorHandlerMiddleware, AppError } from './middlewares/error.middleware
 import { sendSuccess } from './utils/response';
 import logger from './utils/logger';
 
-const app: Express = express();
+import authRouter from './routes/auth.routes';
 
+const app: Express = express();
 // 1. Enable request ID context tracking immediately
 app.use(requestIdMiddleware);
 
@@ -23,6 +24,9 @@ app.use(express.urlencoded({ extended: true }));
 
 // 3. Define APIs under /api/v1
 const apiRouter = express.Router();
+
+// Register authentication endpoints
+apiRouter.use('/auth', authRouter);
 
 // Health check route
 apiRouter.get('/health', (req: Request, res: Response) => {
