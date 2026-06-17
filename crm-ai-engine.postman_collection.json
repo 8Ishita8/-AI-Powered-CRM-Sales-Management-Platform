@@ -1,0 +1,118 @@
+{
+	"info": {
+		"_postman_id": "fd256c9f-b35d-4097-8c9c-37b07c5f6a8e",
+		"name": "CRM AI Engine",
+		"description": "Postman Collection for CRM AI Engine backend endpoints including Health Check, Email Generation, and Background Queue Lead Analysis.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Health Check",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:5000/health",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"health"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Seed Test Data (Fallback Testing)",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:5000/api/v1/ai/seed-test-data",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"api",
+						"v1",
+						"ai",
+						"seed-test-data"
+					]
+				},
+				"description": "Seeds 3 leads in MongoDB: 'High Probability Lead' (expected score 80), 'Medium Probability Lead' (expected score 70), and 'Low Probability Lead' (expected score 50). Returns their ObjectIds and pre-formatted URLs to copy directly into the Analyze request."
+			},
+			"response": []
+		},
+		{
+			"name": "Generate Follow-Up Email",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"leadName\": \"Alice Smith\",\n  \"company\": \"TechCorp Solutions\",\n  \"purpose\": \"Follow up after a successful demo call to request a pricing review meeting\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5000/api/v1/ai/generate-email",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"api",
+						"v1",
+						"ai",
+						"generate-email"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Analyze Lead",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://localhost:5000/api/v1/ai/leads/REPLACE_WITH_LEAD_ID/analyze",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"api",
+						"v1",
+						"ai",
+						"leads",
+						"REPLACE_WITH_LEAD_ID",
+						"analyze"
+					]
+				},
+				"description": "Queues the lead for background analysis. Replace REPLACE_WITH_LEAD_ID with one of the ObjectIds returned by the Seed Test Data endpoint."
+			},
+			"response": []
+		}
+	]
+}
