@@ -1,0 +1,521 @@
+{
+	"info": {
+		"_postman_id": "c3fbbf8c-4cf2-4de4-857e-9721388b9ea9",
+		"name": "XEBIA MEMBER2 CRM",
+		"description": "Integration and RBAC test suite for the Modular Monolith CRM Backend.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Create Lead (Admin)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "x-user-id",
+						"value": "admin-1"
+					},
+					{
+						"key": "x-user-role",
+						"value": "ADMIN"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"John Doe\",\n  \"company\": \"Acme Corp\",\n  \"phone\": \"555-0199\",\n  \"email\": \"john.doe@acme.com\",\n  \"source\": \"Website\",\n  \"team_id\": \"team-alpha\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:3000/api/v1/leads",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"api",
+						"v1",
+						"leads"
+					]
+				},
+				"description": "Creates a new lead in team-alpha. Allowed for ADMIN."
+			},
+			"response": []
+		},
+		{
+			"name": "2. Assign Lead (Manager - Team-Alpha)",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "x-user-id",
+						"value": "manager-1"
+					},
+					{
+						"key": "x-user-role",
+						"value": "MANAGER"
+					},
+					{
+						"key": "x-team-id",
+						"value": "team-alpha"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"assigned_to\": \"exec-1\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:3000/api/v1/leads/REPLACE_WITH_LEAD_ID/assign",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"api",
+						"v1",
+						"leads",
+						"REPLACE_WITH_LEAD_ID",
+						"assign"
+					]
+				},
+				"description": "Assigns the lead to executive exec-1. The lead belongs to team-alpha, so manager-1 (team-alpha) is authorized."
+			},
+			"response": []
+		},
+		{
+			"name": "3. Assign Lead Forbidden (Manager - Team-Beta)",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "x-user-id",
+						"value": "manager-2"
+					},
+					{
+						"key": "x-user-role",
+						"value": "MANAGER"
+					},
+					{
+						"key": "x-team-id",
+						"value": "team-beta"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"assigned_to\": \"exec-2\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:3000/api/v1/leads/REPLACE_WITH_LEAD_ID/assign",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"api",
+						"v1",
+						"leads",
+						"REPLACE_WITH_LEAD_ID",
+						"assign"
+					]
+				},
+				"description": "Expected: 403 Forbidden. manager-2 belongs to team-beta, but the lead belongs to team-alpha."
+			},
+			"response": []
+		},
+		{
+			"name": "4. Move Stage Invalid Transition (Executive)",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "x-user-id",
+						"value": "exec-1"
+					},
+					{
+						"key": "x-user-role",
+						"value": "EXECUTIVE"
+					},
+					{
+						"key": "x-team-id",
+						"value": "team-alpha"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"stage\": \"PROPOSAL\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:3000/api/v1/leads/REPLACE_WITH_LEAD_ID",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"api",
+						"v1",
+						"leads",
+						"REPLACE_WITH_LEAD_ID"
+					]
+				},
+				"description": "Expected: 400 Bad Request. Transition from NEW_LEAD directly to PROPOSAL is invalid (must go through QUALIFIED first). Response message will be 'Invalid stage transition'."
+			},
+			"response": []
+		},
+		{
+			"name": "5. Move Stage Valid Transition (Executive)",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "x-user-id",
+						"value": "exec-1"
+					},
+					{
+						"key": "x-user-role",
+						"value": "EXECUTIVE"
+					},
+					{
+						"key": "x-team-id",
+						"value": "team-alpha"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"stage\": \"QUALIFIED\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:3000/api/v1/leads/REPLACE_WITH_LEAD_ID",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"api",
+						"v1",
+						"leads",
+						"REPLACE_WITH_LEAD_ID"
+					]
+				},
+				"description": "Transition from NEW_LEAD to QUALIFIED. This will save a pipeline_history record in the database."
+			},
+			"response": []
+		},
+		{
+			"name": "6. Log Call (Executive)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "x-user-id",
+						"value": "exec-1"
+					},
+					{
+						"key": "x-user-role",
+						"value": "EXECUTIVE"
+					},
+					{
+						"key": "x-team-id",
+						"value": "team-alpha"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"duration\": 180,\n  \"summary\": \"Discussed requirements with client. They are interested in our proposal.\",\n  \"time\": \"2026-06-17T01:45:00.000Z\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:3000/api/v1/leads/REPLACE_WITH_LEAD_ID/calls",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"api",
+						"v1",
+						"leads",
+						"REPLACE_WITH_LEAD_ID",
+						"calls"
+					]
+				},
+				"description": "Logs a call record. Also automates updating lead's last_activity_at."
+			},
+			"response": []
+		},
+		{
+			"name": "7. Schedule Follow-up (Executive)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "x-user-id",
+						"value": "exec-1"
+					},
+					{
+						"key": "x-user-role",
+						"value": "EXECUTIVE"
+					},
+					{
+						"key": "x-team-id",
+						"value": "team-alpha"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"lead_id\": \"REPLACE_WITH_LEAD_ID\",\n  \"date\": \"2026-06-18T10:00:00.000Z\",\n  \"note\": \"Send contract documents and follow up via email.\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:3000/api/v1/follow-ups",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"api",
+						"v1",
+						"follow-ups"
+					]
+				},
+				"description": "Schedules a follow-up task. Status defaults to PENDING. Updates lead's last_activity_at."
+			},
+			"response": []
+		},
+		{
+			"name": "8. Complete Follow-up (Executive)",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "x-user-id",
+						"value": "exec-1"
+					},
+					{
+						"key": "x-user-role",
+						"value": "EXECUTIVE"
+					},
+					{
+						"key": "x-team-id",
+						"value": "team-alpha"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"status\": \"COMPLETED\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:3000/api/v1/follow-ups/REPLACE_WITH_FOLLOWUP_ID",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"api",
+						"v1",
+						"follow-ups",
+						"REPLACE_WITH_FOLLOWUP_ID"
+					]
+				},
+				"description": "Marks the follow-up as COMPLETED. Updates lead's last_activity_at."
+			},
+			"response": []
+		},
+		{
+			"name": "9. View Complete Lead History (Executive)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "x-user-id",
+						"value": "exec-1"
+					},
+					{
+						"key": "x-user-role",
+						"value": "EXECUTIVE"
+					},
+					{
+						"key": "x-team-id",
+						"value": "team-alpha"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:3000/api/v1/leads/REPLACE_WITH_LEAD_ID",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"api",
+						"v1",
+						"leads",
+						"REPLACE_WITH_LEAD_ID"
+					]
+				},
+				"description": "Aggregates and returns Lead details, pipeline history logs, calls logged, and scheduled follow-ups."
+			},
+			"response": []
+		},
+		{
+			"name": "10. View Lead Details Forbidden (Executive)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "x-user-id",
+						"value": "exec-2"
+					},
+					{
+						"key": "x-user-role",
+						"value": "EXECUTIVE"
+					},
+					{
+						"key": "x-team-id",
+						"value": "team-beta"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:3000/api/v1/leads/REPLACE_WITH_LEAD_ID",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"api",
+						"v1",
+						"leads",
+						"REPLACE_WITH_LEAD_ID"
+					]
+				},
+				"description": "Expected: 403 Forbidden. exec-2 is trying to look up the lead assigned to exec-1."
+			},
+			"response": []
+		},
+		{
+			"name": "11. Query Leads (Manager - Team-Alpha)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "x-user-id",
+						"value": "manager-1"
+					},
+					{
+						"key": "x-user-role",
+						"value": "MANAGER"
+					},
+					{
+						"key": "x-team-id",
+						"value": "team-alpha"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:3000/api/v1/leads?page=1&limit=10",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"api",
+						"v1",
+						"leads"
+					],
+					"query": [
+						{
+							"key": "page",
+							"value": "1"
+						},
+						{
+							"key": "limit",
+							"value": "10"
+						}
+					]
+				},
+				"description": "Fetches leads matching team-alpha. manager-1 will see the lead created in step 1."
+			},
+			"response": []
+		},
+		{
+			"name": "12. Query Leads (Manager - Team-Beta)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "x-user-id",
+						"value": "manager-2"
+					},
+					{
+						"key": "x-user-role",
+						"value": "MANAGER"
+					},
+					{
+						"key": "x-team-id",
+						"value": "team-beta"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:3000/api/v1/leads?page=1&limit=10",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"api",
+						"v1",
+						"leads"
+					],
+					"query": [
+						{
+							"key": "page",
+							"value": "1"
+						},
+						{
+							"key": "limit",
+							"value": "10"
+						}
+					]
+				},
+				"description": "Fetches leads matching team-beta. manager-2 will see 0 leads because the lead belongs to team-alpha."
+			},
+			"response": []
+		}
+	]
+}
