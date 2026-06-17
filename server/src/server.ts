@@ -1,12 +1,9 @@
-import dotenv from 'dotenv';
-// Load environment variables first
-dotenv.config();
-
+import env from './config/env'; // Asserts all required environment variables are present at startup
 import app from './app';
 import logger from './utils/logger';
 
-const PORT = process.env.PORT || 5000;
-const NODE_ENV = process.env.NODE_ENV || 'development';
+const PORT = env.PORT;
+const NODE_ENV = env.NODE_ENV;
 
 const server = app.listen(PORT, () => {
   logger.info(`========================================================`);
