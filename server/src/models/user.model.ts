@@ -26,6 +26,7 @@ const mockUsers: User[] = [
     email: 'manager@crm.com',
     passwordHash: bcrypt.hashSync('Password123', 10),
     role: 'manager',
+    teamId: 'team-alpha',
     createdAt: new Date(),
   },
   {
@@ -34,6 +35,7 @@ const mockUsers: User[] = [
     email: 'executive@crm.com',
     passwordHash: bcrypt.hashSync('Password123', 10),
     role: 'executive',
+    teamId: 'team-alpha',
     createdAt: new Date(),
   },
 ];

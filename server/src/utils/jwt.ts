@@ -13,6 +13,7 @@ export interface UserTokenPayload {
   userId: string;
   email: string;
   role: 'admin' | 'manager' | 'executive';
+  teamId?: string;
 }
 
 /**

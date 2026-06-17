@@ -6,6 +6,7 @@ import { sendSuccess } from './utils/response';
 import logger from './utils/logger';
 
 import authRouter from './routes/auth.routes';
+import leadRouter from './routes/lead.routes';
 
 const app: Express = express();
 // 1. Enable request ID context tracking immediately
@@ -27,6 +28,9 @@ const apiRouter = express.Router();
 
 // Register authentication endpoints
 apiRouter.use('/auth', authRouter);
+
+// Register leads endpoints
+apiRouter.use('/leads', leadRouter);
 
 // Health check route
 apiRouter.get('/health', (req: Request, res: Response) => {

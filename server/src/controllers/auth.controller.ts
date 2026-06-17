@@ -37,6 +37,7 @@ export const loginController = async (
       userId: user.id,
       email: user.email,
       role: user.role,
+      teamId: user.teamId,
     });
 
     logger.info(`Login successful: JWT generated for ${user.email} with role [${user.role}]`);
