@@ -1,5 +1,5 @@
 import { ClientSession, FilterQuery, UpdateQuery } from "mongoose";
-import { FollowupModel, IFollowup } from "../models/followup.model";
+import { FollowupModel, IFollowup } from "../../../models/followup.model";
 
 export class FollowupRepository {
   public async create(followupData: Partial<IFollowup>, session?: ClientSession): Promise<IFollowup> {

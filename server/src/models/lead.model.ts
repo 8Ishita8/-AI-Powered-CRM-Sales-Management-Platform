@@ -1,72 +1,54 @@
-export interface Lead {
-  id: string;
+import { Schema, model, Document } from 'mongoose';
+
+export interface ILead extends Document {
   name: string;
-  company: string;
+  company?: string;
   phone: string;
   email: string;
   source: string;
-  stage: 'new_lead' | 'qualified' | 'proposal' | 'negotiation' | 'won' | 'lost';
+  stage: string;
+  assigned_to?: string;
+  team_id?: string;
+  last_activity_at: Date;
   conversionScore?: number;
   aiAnalysisSummary?: string;
-  assignedTo: string; // User ID
-  teamId?: string;
-  createdAt: Date;
+  probabilityClass?: string;
+  nextBestAction?: string;
+  created_at: Date;
+  updated_at: Date;
 }
 
-// In-memory mock leads database populated with scoped ownerships
-const mockLeads: Lead[] = [
+const LeadSchema = new Schema<ILead>(
   {
-    id: 'lead-1',
-    name: 'Alice Green',
-    company: 'Alpha Corp',
-    phone: '123-456-7890',
-    email: 'alice@alphacorp.com',
-    source: 'pricing_page',
-    stage: 'new_lead',
-    conversionScore: 85,
-    assignedTo: '33333333-3333-3333-3333-333333333333', // Assigned to Bob Johnson (Executive on team-alpha)
-    teamId: 'team-alpha',
-    createdAt: new Date(),
+    name: { type: String, required: true, trim: true },
+    company: { type: String, trim: true },
+    phone: { type: String, required: true },
+    email: { type: String, required: true, lowercase: true, trim: true, index: true },
+    source: { type: String, required: true, trim: true, index: true },
+    stage: {
+      type: String,
+      required: true,
+      default: 'new_lead',
+      index: true,
+    },
+    assigned_to: { type: String, default: null, index: true },
+    team_id: { type: String, default: null, index: true },
+    last_activity_at: { type: Date, required: true, default: Date.now, index: true },
+    conversionScore: { type: Number, default: null },
+    aiAnalysisSummary: { type: String, default: null },
+    probabilityClass: { type: String, default: null },
+    nextBestAction: { type: String, default: null },
   },
   {
-    id: 'lead-2',
-    name: 'Charlie Brown',
-    company: 'Beta LLC',
-    phone: '234-567-8901',
-    email: 'charlie@betallc.com',
-    source: 'demo_request',
-    stage: 'qualified',
-    conversionScore: 60,
-    assignedTo: '44444444-4444-4444-4444-444444444444', // Assigned to another Exec but on team-alpha
-    teamId: 'team-alpha',
-    createdAt: new Date(),
-  },
-  {
-    id: 'lead-3',
-    name: 'David Smith',
-    company: 'Gamma Inc',
-    phone: '345-678-9012',
-    email: 'david@gammainc.com',
-    source: 'cold_outreach',
-    stage: 'proposal',
-    conversionScore: 40,
-    assignedTo: '55555555-5555-5555-5555-555555555555', // Assigned to Exec on team-beta
-    teamId: 'team-beta',
-    createdAt: new Date(),
-  },
-];
+    timestamps: {
+      createdAt: 'created_at',
+      updatedAt: 'updated_at',
+    },
+    collection: 'leads',
+  }
+);
 
-/**
- * Returns all mock leads
- */
-export const getMockLeads = (): Lead[] => {
-  return mockLeads;
-};
-
-/**
- * Find single mock lead by ID
- */
-export const findLeadById = async (id: string): Promise<Lead | null> => {
-  const lead = mockLeads.find((l) => l.id === id);
-  return lead || null;
-};
+export const LeadModel = model<ILead>('Lead', LeadSchema);
+// Export as Lead as well for Member 4 branch imports compatibility
+export const Lead = LeadModel;
+export default LeadModel;

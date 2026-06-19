@@ -3,14 +3,15 @@ import { LeadRepository } from "../repositories/lead.repository";
 import { PipelineRepository } from "../repositories/pipeline.repository";
 import { FollowupRepository } from "../../followups/repositories/followup.repository";
 import { CallRepository } from "../../calls/repositories/call.repository";
-import { ILead } from "../models/lead.model";
+import { ILead } from "../../../models/lead.model";
 import { isValidStageTransition, LeadStage } from "../constants/stage.constants";
 import { updateLastActivity } from "../../../shared/utils/activity.helper";
 import { runInTransaction } from "../../../shared/utils/transaction.helper";
-import { AppError } from "../../../middleware/error.middleware";
+import { AppError } from "../../../middlewares/error.middleware";
 import { UserContext } from "../../../shared/types";
 import { CreateLeadInput } from "../validators/createLead.schema";
 import { UpdateLeadInput } from "../validators/updateLead.schema";
+import { queueLeadAnalysis } from "../../../queues/scoring.queue";
 
 export class LeadService {
   private leadRepository: LeadRepository;
@@ -28,9 +29,9 @@ export class LeadService {
   private buildRbacFilter(user: UserContext, queryFilters: any = {}): any {
     const filter: any = { ...queryFilters };
 
-    if (user.role === "EXECUTIVE") {
+    if (user.role === "executive") {
       filter.assigned_to = user.id;
-    } else if (user.role === "MANAGER") {
+    } else if (user.role === "manager") {
       filter.team_id = user.teamId || "NO_TEAM";
     }
 
@@ -38,11 +39,11 @@ export class LeadService {
   }
 
   private checkLeadAccess(lead: ILead, user: UserContext): void {
-    if (user.role === "EXECUTIVE") {
+    if (user.role === "executive") {
       if (lead.assigned_to !== user.id) {
         throw new AppError("Forbidden: You only have access to your own leads.", 403);
       }
-    } else if (user.role === "MANAGER") {
+    } else if (user.role === "manager") {
       if (lead.team_id !== user.teamId) {
         throw new AppError("Forbidden: You only have access to leads within your team.", 403);
       }
@@ -56,17 +57,19 @@ export class LeadService {
     };
 
     // If EXECUTIVE creates a lead, automatically assign it to them
-    if (user.role === "EXECUTIVE") {
+    if (user.role === "executive") {
       leadData.assigned_to = user.id;
       leadData.team_id = user.teamId;
-    } else if (user.role === "MANAGER") {
+    } else if (user.role === "manager") {
       // If manager creates, default lead team_id to manager's team
       if (!leadData.team_id) {
         leadData.team_id = user.teamId;
       }
     }
 
-    return this.leadRepository.create(leadData);
+    const newLead = await this.leadRepository.create(leadData);
+    queueLeadAnalysis(newLead._id.toString()).catch((err) => console.error("Error triggering AI scoring:", err));
+    return newLead;
   }
 
   public async getLeads(
@@ -123,7 +126,7 @@ export class LeadService {
     this.checkLeadAccess(lead, user);
 
     // Executives cannot assign/reassign leads
-    if (input.assigned_to !== undefined && user.role === "EXECUTIVE" && input.assigned_to !== lead.assigned_to) {
+    if (input.assigned_to !== undefined && user.role === "executive" && input.assigned_to !== lead.assigned_to) {
       throw new AppError("Forbidden: Executives cannot assign leads.", 403);
     }
 
@@ -137,7 +140,7 @@ export class LeadService {
       }
 
       // Execute transaction for stage changes
-      return runInTransaction(async (session) => {
+      const updatedLead = await runInTransaction(async (session) => {
         const updatedLead = await this.leadRepository.updateOne(
           id,
           {
@@ -164,6 +167,9 @@ export class LeadService {
 
         return updatedLead;
       });
+
+      queueLeadAnalysis(id).catch((err) => console.error("Error triggering AI scoring:", err));
+      return updatedLead;
     }
 
     // No stage change, simple update
@@ -176,6 +182,7 @@ export class LeadService {
       throw new AppError("Lead not found", 404);
     }
 
+    queueLeadAnalysis(id).catch((err) => console.error("Error triggering AI scoring:", err));
     return updated;
   }
 
@@ -188,12 +195,12 @@ export class LeadService {
     this.checkLeadAccess(lead, user);
 
     // Executives cannot assign leads
-    if (user.role === "EXECUTIVE") {
+    if (user.role === "executive") {
       throw new AppError("Forbidden: Executives cannot assign leads.", 403);
     }
 
     // Managers can assign, but lead must belong to their team
-    if (user.role === "MANAGER") {
+    if (user.role === "manager") {
       if (lead.team_id !== user.teamId) {
         throw new AppError("Forbidden: You can only assign leads belonging to your team.", 403);
       }

@@ -10,7 +10,8 @@ const getJwtSecret = (): string => {
 };
 
 export interface UserTokenPayload {
-  userId: string;
+  id: string; // Alias for userId, used by lead features
+  userId: string; // Used by auth features
   email: string;
   role: 'admin' | 'manager' | 'executive';
   teamId?: string;

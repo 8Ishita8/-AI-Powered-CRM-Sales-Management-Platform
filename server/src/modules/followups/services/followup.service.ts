@@ -1,10 +1,10 @@
 import mongoose from "mongoose";
 import { FollowupRepository } from "../repositories/followup.repository";
 import { LeadRepository } from "../../leads/repositories/lead.repository";
-import { IFollowup } from "../models/followup.model";
+import { IFollowup } from "../../../models/followup.model";
 import { updateLastActivity } from "../../../shared/utils/activity.helper";
 import { runInTransaction } from "../../../shared/utils/transaction.helper";
-import { AppError } from "../../../middleware/error.middleware";
+import { AppError } from "../../../middlewares/error.middleware";
 import { UserContext } from "../../../shared/types";
 import { CreateFollowupInput } from "../validators/followup.validator";
 
@@ -18,11 +18,11 @@ export class FollowupService {
   }
 
   private checkLeadAccess(lead: any, user: UserContext): void {
-    if (user.role === "EXECUTIVE") {
+    if (user.role === "executive") {
       if (lead.assigned_to !== user.id) {
         throw new AppError("Forbidden: You only have access to your own leads.", 403);
       }
-    } else if (user.role === "MANAGER") {
+    } else if (user.role === "manager") {
       if (lead.team_id !== user.teamId) {
         throw new AppError("Forbidden: You only have access to leads within your team.", 403);
       }
@@ -70,10 +70,10 @@ export class FollowupService {
       query.lead_id = lead._id;
     } else {
       // Find eligible lead IDs
-      if (user.role === "EXECUTIVE") {
+      if (user.role === "executive") {
         const leads = await this.leadRepository.find({ assigned_to: user.id }, { page: 1, limit: 1000 });
         query.lead_id = { $in: leads.map((l) => l._id) };
-      } else if (user.role === "MANAGER") {
+      } else if (user.role === "manager") {
         const leads = await this.leadRepository.find({ team_id: user.teamId || "NO_TEAM" }, { page: 1, limit: 1000 });
         query.lead_id = { $in: leads.map((l) => l._id) };
       }

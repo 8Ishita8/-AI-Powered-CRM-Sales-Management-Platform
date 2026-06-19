@@ -2,7 +2,7 @@ import { Worker, Job } from 'bullmq';
 import { redisConnection, isRedisAvailable } from '../config/redis';
 import { buildLeadContext } from '../modules/ai/context-builder';
 import { AIService } from '../modules/ai/ai.service';
-import { Lead } from '../modules/lead/lead.model';
+import { Lead } from '../models/lead.model';
 
 const aiService = new AIService();
 
@@ -76,7 +76,7 @@ export function initializeWorker(redisOnline: boolean) {
           return await executeScoringJob(leadId, jobId);
         },
         {
-          connection: redisConnection,
+          connection: redisConnection as any,
           concurrency: 5, // Process up to 5 jobs in parallel
         }
       );

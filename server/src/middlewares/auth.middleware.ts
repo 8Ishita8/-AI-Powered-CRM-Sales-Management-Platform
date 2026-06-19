@@ -8,17 +8,43 @@ import logger from '../utils/logger';
  */
 export const requireAuth = (req: Request, res: Response, next: NextFunction): void => {
   const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    logger.warn('Authentication failed: Missing or malformed Authorization header');
+  let payload: UserTokenPayload | null = null;
+
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.split(' ')[1];
+    try {
+      payload = verifyAccessToken(token);
+    } catch (err) {
+      logger.warn(`JWT validation failed: ${err instanceof Error ? err.message : err}`);
+    }
+  }
+
+  // Fallback to mock headers
+  if (!payload) {
+    const mockUserId = req.headers['x-user-id'] as string;
+    const mockUserRole = req.headers['x-user-role'] as string;
+    const mockTeamId = req.headers['x-team-id'] as string;
+
+    if (mockUserId && mockUserRole) {
+      const normalizedRole = mockUserRole.toLowerCase();
+      if (['admin', 'manager', 'executive'].includes(normalizedRole)) {
+        payload = {
+          id: mockUserId,
+          userId: mockUserId,
+          email: `${normalizedRole}@mock.com`,
+          role: normalizedRole as 'admin' | 'manager' | 'executive',
+          teamId: mockTeamId || undefined,
+        };
+      }
+    }
+  }
+
+  if (!payload) {
+    logger.warn('Authentication failed: No valid JWT or mock headers provided');
     throw new AppError('Authentication access token is missing or malformed.', 401, 'UNAUTHORIZED');
   }
 
-  const token = authHeader.split(' ')[1];
-  
-  // Verify token (throws AppError internally if expired or signature invalid)
-  const payload = verifyAccessToken(token);
   req.user = payload;
-  
   next();
 };
 

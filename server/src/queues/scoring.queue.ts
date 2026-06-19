@@ -14,7 +14,7 @@ export function initializeQueue(redisOnline: boolean) {
   if (redisOnline && !scoringQueue) {
     try {
       scoringQueue = new Queue('lead-scoring', {
-        connection: redisConnection,
+        connection: redisConnection as any,
         defaultJobOptions: {
           attempts: 3,
           backoff: {

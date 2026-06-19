@@ -1,5 +1,5 @@
 import { ClientSession, FilterQuery } from "mongoose";
-import { CallRecordModel, ICallRecord } from "../models/callRecord.model";
+import { CallRecordModel, ICallRecord } from "../../../models/callRecord.model";
 
 export class CallRepository {
   public async create(callData: Partial<ICallRecord>, session?: ClientSession): Promise<ICallRecord> {

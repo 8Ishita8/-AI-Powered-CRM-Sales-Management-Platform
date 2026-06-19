@@ -1,12 +1,13 @@
 import mongoose from "mongoose";
 import { CallRepository } from "../repositories/call.repository";
 import { LeadRepository } from "../../leads/repositories/lead.repository";
-import { ICallRecord } from "../models/callRecord.model";
+import { ICallRecord } from "../../../models/callRecord.model";
 import { updateLastActivity } from "../../../shared/utils/activity.helper";
 import { runInTransaction } from "../../../shared/utils/transaction.helper";
-import { AppError } from "../../../middleware/error.middleware";
+import { AppError } from "../../../middlewares/error.middleware";
 import { UserContext } from "../../../shared/types";
 import { CreateCallInput } from "../validators/call.validator";
+import { queueLeadAnalysis } from "../../../queues/scoring.queue";
 
 export class CallService {
   private callRepository: CallRepository;
@@ -18,11 +19,11 @@ export class CallService {
   }
 
   private checkLeadAccess(lead: any, user: UserContext): void {
-    if (user.role === "EXECUTIVE") {
+    if (user.role === "executive") {
       if (lead.assigned_to !== user.id) {
         throw new AppError("Forbidden: You only have access to your own leads.", 403);
       }
-    } else if (user.role === "MANAGER") {
+    } else if (user.role === "manager") {
       if (lead.team_id !== user.teamId) {
         throw new AppError("Forbidden: You only have access to leads within your team.", 403);
       }
@@ -41,7 +42,7 @@ export class CallService {
 
     this.checkLeadAccess(lead, user);
 
-    return runInTransaction(async (session) => {
+    const callRecord = await runInTransaction(async (session) => {
       const callRecord = await this.callRepository.create(
         {
           lead_id: lead._id as mongoose.Types.ObjectId,
@@ -57,5 +58,8 @@ export class CallService {
 
       return callRecord;
     });
+
+    queueLeadAnalysis(leadId).catch((err) => console.error("Error triggering AI scoring:", err));
+    return callRecord;
   }
 }

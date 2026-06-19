@@ -1,50 +1,49 @@
-import { Pool, QueryResult } from 'pg';
+import mongoose from 'mongoose';
 import env from './env';
 import logger from '../utils/logger';
 
-// Instantiate the Postgres connection pool
-const pool = new Pool({
-  connectionString: env.DATABASE_URL,
-  max: env.NODE_ENV === 'production' ? 20 : 10,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 5000,
-});
+/**
+ * Connect to MongoDB database
+ */
+export async function connectDB(): Promise<void> {
+  const mongoUri = env.MONGO_URI;
 
-// Attach event listener for new database clients
-pool.on('connect', () => {
-  logger.debug('PostgreSQL database pool allocated a new client connection');
-});
+  try {
+    mongoose.set('strictQuery', true);
 
-// Attach event listener for pool errors
-pool.on('error', (err) => {
-  logger.error('Unexpected error from idle PostgreSQL client connection pool', {
-    message: err.message,
-    stack: err.stack,
-  });
-});
+    mongoose.connection.on('connected', () => {
+      logger.info('MongoDB database connection successfully established.');
+    });
+
+    mongoose.connection.on('error', (err) => {
+      logger.error(`MongoDB connection encountered an error: ${err}`);
+    });
+
+    mongoose.connection.on('disconnected', () => {
+      logger.warn('MongoDB disconnected from database.');
+    });
+
+    await mongoose.connect(mongoUri);
+  } catch (error) {
+    logger.error('Failed to connect to MongoDB:', error);
+    process.exit(1);
+  }
+}
+
+export const connectDatabase = connectDB;
 
 /**
- * Executes a parameterized SQL query against the pool.
- * Wraps calls to audit timing and record failures.
+ * Disconnect from MongoDB database
  */
-export const query = async (text: string, params?: any[]): Promise<QueryResult> => {
-  const startTime = Date.now();
+export async function disconnectDB(): Promise<void> {
   try {
-    const res = await pool.query(text, params);
-    const duration = Date.now() - startTime;
-    logger.debug(`SQL Query completed: ${duration}ms`, {
-      text,
-      rowsAffected: res.rowCount,
-    });
-    return res;
-  } catch (error: any) {
-    const duration = Date.now() - startTime;
-    logger.error(`SQL Query failed after ${duration}ms: ${error.message}`, {
-      text,
-      errorStack: error.stack,
-    });
-    throw error;
+    await mongoose.disconnect();
+    logger.info('MongoDB database disconnected successfully.');
+  } catch (error) {
+    logger.error('Error disconnecting MongoDB:', error);
   }
-};
+}
 
-export default pool;
+export const disconnectDatabase = disconnectDB;
+
+export default mongoose;

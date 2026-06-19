@@ -2,35 +2,46 @@ import Redis, { RedisOptions } from 'ioredis';
 import env from './env';
 import logger from '../utils/logger';
 
-// Parse host, port, and credentials from connection URL
-const parsedUrl = new URL(env.REDIS_URL);
+const redisUrl = env.REDIS_URL;
 
-/**
- * Shared configuration options object.
- * NOTE: BullMQ requires 'maxRetriesPerRequest: null' to be set.
- */
+export let isRedisAvailable = true;
+
+// Shared connection configuration options for BullMQ compatibility
+const parsedUrl = new URL(redisUrl);
 export const redisConnectionConfig: RedisOptions = {
   host: parsedUrl.hostname,
   port: parseInt(parsedUrl.port || '6379'),
   username: parsedUrl.username || undefined,
   password: parsedUrl.password || undefined,
-  maxRetriesPerRequest: null,
+  maxRetriesPerRequest: null, // BullMQ requires maxRetriesPerRequest to be null
+  lazyConnect: true,
+  retryStrategy(times) {
+    if (times > 1) {
+      isRedisAvailable = false;
+      return null; // Stop retrying connection after first failure
+    }
+    return 100; // Retry once after 100ms
+  },
 };
 
-// Instantiate the default Redis client connection
-const redis = new Redis(env.REDIS_URL, {
-  maxRetriesPerRequest: null,
+// Instantiate the reusable Redis connection
+export const redisConnection = new Redis(redisUrl, {
+  ...redisConnectionConfig,
 });
 
-redis.on('connect', () => {
-  logger.info('Redis client connection successfully established.');
+redisConnection.on('connect', () => {
+  logger.info('Redis connection client successfully established.');
+  isRedisAvailable = true;
 });
 
-redis.on('error', (error) => {
-  logger.error('Redis connection client encountered an error:', {
-    message: error.message,
-    stack: error.stack,
-  });
+redisConnection.on('error', (error) => {
+  if (isRedisAvailable) {
+    logger.warn('Redis connection failed. falling back to In-Memory Queue mode.');
+    isRedisAvailable = false;
+    redisConnection.disconnect(); // Terminate reconnect attempts
+  }
 });
 
+// Alias for generic redis client imports
+export const redis = redisConnection;
 export default redis;

@@ -11,14 +11,15 @@ const envSchema = z.object({
     .string()
     .min(1, 'JWT_SECRET is missing or empty.'),
   JWT_EXPIRES_IN: z.string().default('1h'),
-  DATABASE_URL: z
+  MONGO_URI: z
     .string()
-    .min(1, 'DATABASE_URL connection string is missing.')
-    .url('DATABASE_URL must be a valid connection URL schema.'),
+    .min(1, 'MONGO_URI connection string is missing.'),
   REDIS_URL: z
     .string()
-    .min(1, 'REDIS_URL connection string is missing.')
-    .url('REDIS_URL must be a valid connection URL schema.'),
+    .min(1, 'REDIS_URL connection string is missing.'),
+  GEMINI_API_KEY: z
+    .string()
+    .min(1, 'GEMINI_API_KEY is missing or empty.'),
 });
 
 const parseEnvironment = () => {

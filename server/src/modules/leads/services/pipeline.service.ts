@@ -1,5 +1,5 @@
 import { PipelineRepository } from "../repositories/pipeline.repository";
-import { IPipelineHistory } from "../models/pipelineHistory.model";
+import { IPipelineHistory } from "../../../models/pipelineHistory.model";
 
 export class PipelineService {
   private pipelineRepository: PipelineRepository;

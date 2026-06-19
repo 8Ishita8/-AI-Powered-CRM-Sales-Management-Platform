@@ -1,5 +1,5 @@
 import { ClientSession, FilterQuery, UpdateQuery } from "mongoose";
-import { LeadModel, ILead } from "../models/lead.model";
+import { LeadModel, ILead } from "../../../models/lead.model";
 
 export class LeadRepository {
   public async create(leadData: Partial<ILead>, session?: ClientSession): Promise<ILead> {

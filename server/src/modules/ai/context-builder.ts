@@ -1,7 +1,7 @@
 import { Types } from 'mongoose';
-import { Lead, ILead } from '../lead/lead.model';
-import { Activity, IActivity } from '../activity/activity.model';
-import { FollowUp, IFollowUp } from '../followup/followup.model';
+import { Lead, ILead } from '../../models/lead.model';
+import { Activity, IActivity } from '../../models/activity.model';
+import { FollowUp, IFollowUp } from '../../models/followup.model';
 
 export interface LeadContext {
   lead: ILead;
@@ -30,13 +30,13 @@ export async function buildLeadContext(leadId: string): Promise<LeadContext> {
   }
 
   // 2. Fetch last 5 activities (most recent first)
-  const activities = await Activity.find({ leadId: leadObjectId })
+  const activities = await Activity.find({ $or: [{ leadId: leadObjectId }, { lead_id: leadObjectId }] })
     .sort({ createdAt: -1 })
     .limit(5);
 
   // 3. Fetch last 5 followups (most recent follow-up date first)
-  const followups = await FollowUp.find({ leadId: leadObjectId })
-    .sort({ followUpDate: -1 })
+  const followups = await FollowUp.find({ $or: [{ leadId: leadObjectId }, { lead_id: leadObjectId }] })
+    .sort({ followUpDate: -1, date: -1 })
     .limit(5);
 
   return {

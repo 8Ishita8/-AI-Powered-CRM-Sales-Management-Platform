@@ -1,5 +1,5 @@
 import { ClientSession } from "mongoose";
-import { PipelineHistoryModel, IPipelineHistory } from "../models/pipelineHistory.model";
+import { PipelineHistoryModel, IPipelineHistory } from "../../../models/pipelineHistory.model";
 
 export class PipelineRepository {
   public async create(

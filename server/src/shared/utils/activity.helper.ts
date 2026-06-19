@@ -1,5 +1,5 @@
 import { ClientSession } from "mongoose";
-import { LeadModel } from "../../modules/leads/models/lead.model";
+import { LeadModel } from "../../models/lead.model";
 
 /**
  * Centralized utility to update a lead's last_activity_at timestamp.

@@ -1,13 +1,13 @@
 import dotenv from 'dotenv';
 import path from 'path';
 
-// Load environment variables from the root .env file
+// Load environment variables from the server/.env file
 dotenv.config({ path: path.join(__dirname, '../../.env') });
 
-import { connectDatabase, disconnectDatabase } from '../config/database';
-import { Lead } from '../modules/lead/lead.model';
-import { Activity } from '../modules/activity/activity.model';
-import { FollowUp } from '../modules/followup/followup.model';
+import { connectDatabase, disconnectDatabase } from '../config/db';
+import { Lead } from '../models/lead.model';
+import { Activity } from '../models/activity.model';
+import { FollowUp } from '../models/followup.model';
 import { buildLeadContext } from '../modules/ai/context-builder';
 import { AIService } from '../modules/ai/ai.service';
 
@@ -29,7 +29,9 @@ async function runVerification() {
     const mockLead = await Lead.create({
       name: 'Jane Doe',
       email: 'jane.doe@verification-test.com',
-      stage: 'Prospecting',
+      phone: '123-456-7890',
+      source: 'pricing_page',
+      stage: 'new_lead',
     });
     console.log(`[Verify] Seeding successful. Lead ID: ${mockLead.id}`);
 
@@ -46,9 +48,9 @@ async function runVerification() {
     // 5. Seed Mock Follow-ups (3 followups)
     console.log('[Verify] Seeding 3 mock FollowUps for Lead...');
     const followupsData = [
-      { leadId: mockLead._id, followUpDate: new Date(Date.now() + 24 * 60 * 60 * 1000), status: 'pending' },
-      { leadId: mockLead._id, followUpDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), status: 'pending' },
-      { leadId: mockLead._id, followUpDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), status: 'completed' },
+      { lead_id: mockLead._id, date: new Date(Date.now() + 24 * 60 * 60 * 1000), status: 'PENDING' },
+      { lead_id: mockLead._id, date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), status: 'PENDING' },
+      { lead_id: mockLead._id, date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), status: 'COMPLETED' },
     ];
     await FollowUp.insertMany(followupsData);
 

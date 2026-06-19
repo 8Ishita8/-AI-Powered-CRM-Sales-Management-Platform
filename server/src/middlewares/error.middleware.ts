@@ -72,4 +72,5 @@ export const errorHandlerMiddleware = (
   sendError(res, message, statusCode, code, details, err.stack);
 };
 
+export const errorHandler = errorHandlerMiddleware;
 export default errorHandlerMiddleware;
