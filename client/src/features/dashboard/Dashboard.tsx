@@ -1,9 +1,11 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { ShieldAlert, TrendingUp, Users, Target, CheckCircle, Sparkles } from 'lucide-react';
 
 export const Dashboard: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   // 1. Executive Role Access Warning
   if (user?.role === 'executive') {
@@ -29,7 +31,7 @@ export const Dashboard: React.FC = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight text-white">Management & Performance Dashboard</h2>
+        <h2 className="text-3xl font-bold tracking-tight text-white font-outfit">Management & Performance Dashboard</h2>
         <p className="text-slate-400 text-sm mt-1">
           Full CRM health stats, pipeline aggregates, and representative summaries.
         </p>
@@ -119,7 +121,10 @@ export const Dashboard: React.FC = () => {
               The response rate is 2.4x higher than standard outreach templates.
             </p>
           </div>
-          <button className="w-full mt-6 py-3 px-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-semibold text-xs transition-colors shadow-lg shadow-indigo-600/20">
+          <button 
+            onClick={() => navigate(user?.role === 'admin' ? '/analytics' : '/leads')}
+            className="w-full mt-6 py-3 px-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-semibold text-xs transition-colors shadow-lg shadow-indigo-600/20 active:scale-95 transition-all duration-150"
+          >
             View Analytics Detail
           </button>
         </div>
