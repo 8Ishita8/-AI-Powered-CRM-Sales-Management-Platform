@@ -1,36 +1,44 @@
-import express, { Request, Response, NextFunction } from 'express';
-import { aiRouter } from './routes/ai.routes';
+import express from "express";
+import cors from "cors";
+import helmet from "helmet";
+import morgan from "morgan";
+import dotenv from "dotenv";
+import { connectDB } from "./config/db";
+import leadRoutes from "./modules/leads/routes/lead.routes";
+import followupRoutes from "./modules/followups/routes/followup.routes";
+import { errorHandler } from "./middleware/error.middleware";
+
+dotenv.config();
 
 const app = express();
+const PORT = process.env.PORT || 3000;
 
-// Middleware to parse incoming JSON payloads
+// Connect to Database
+connectDB();
+
+// Middlewares
+app.use(helmet());
+app.use(cors());
+app.use(morgan("dev"));
 app.use(express.json());
 
-// Register API Routes
-// Mounts the health check (at /health) and AI analysis/email endpoints
-app.use('/', aiRouter);
+// Routes
+app.use("/api/v1/leads", leadRoutes);
+app.use("/api/v1/follow-ups", followupRoutes);
 
-// Catch-all route for unhandled paths
-app.use((req: Request, res: Response) => {
-  res.status(404).json({
-    success: false,
-    error: `Endpoint not found: ${req.method} ${req.originalUrl}`,
-  });
+// Health check endpoint
+app.get("/health", (req, res) => {
+  res.status(200).json({ success: true, status: "healthy" });
 });
 
-// Centralized Error Handling Middleware
-app.use((err: any, req: Request, res: Response, next: NextFunction) => {
-  console.error('[Centralized Error Handler] Unexpected error occurred:', err);
+// Centralized Error Handler (must be registered last)
+app.use(errorHandler);
 
-  const statusCode = err.status || 500;
-  const message = err.message || 'An unexpected internal server error occurred.';
-
-  res.status(statusCode).json({
-    success: false,
-    error: message,
-    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+// Start server (only if not imported for tests)
+if (process.env.NODE_ENV !== "test") {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT} in ${process.env.NODE_ENV || "development"} mode`);
   });
-});
+}
 
 export default app;
-export { app };
